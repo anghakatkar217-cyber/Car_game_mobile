@@ -24,9 +24,56 @@ button#startBtn:active{transform:translateY(0)}
 .menu-stats div{font-size:14px;font-weight:bold;color:#ffcc00;}
 .menu-coins{color:#ffd700 !important;border-top:1px dashed rgba(255,215,0,0.3);padding-top:5px;margin-top:2px;font-size:15px !important;}
 
-/* Mobile Touch Controls Overlay */
-#touch-controls {position:absolute;bottom:0;left:0;width:100%;height:70%;z-index:4;display:flex;}
-.touch-zone {width:50%;height:100%;height:100%;-webkit-tap-highlight-color:transparent;}
+/* --- VISIBLE TOUCH CONTROLS --- */
+#touch-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 100px;
+    z-index: 6;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none; /* Let clicks pass to zones if stacked */
+}
+
+.steering-btn {
+    width: 90px;
+    height: 90px;
+    background: rgba(80, 80, 80, 0.6);
+    backdrop-filter: blur(5px);
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto; /* Active for touch */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: background 0.1s, transform 0.1s;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.steering-btn:active {
+    background: rgba(255, 34, 34, 0.7);
+    transform: scale(0.95);
+    border-color: rgba(255, 34, 34, 0.9);
+}
+
+/* Label for mobile instructions */
+.btn-label {
+    position: absolute;
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#left-btn-label { bottom: 120px; left: 25px; }
+#right-btn-label { bottom: 120px; right: 25px; }
+
 </style>
 
 <script>
@@ -54,15 +101,18 @@ if (typeof THREE === 'undefined') {
 
 <button id="home">🏠 Home</button>
 
+<div class="btn-label" id="left-btn-label">Steer Left</div>
+<div class="btn-label" id="right-btn-label">Steer Right</div>
+
 <div id="touch-controls">
-  <div id="left-zone" class="touch-zone"></div>
-  <div id="right-zone" class="touch-zone"></div>
+  <div id="left-btn" class="steering-btn">&#x2190;</div>
+  <div id="right-btn" class="steering-btn">&#x2192;</div>
 </div>
 
 <div id="menu">
 <div class="menu-card">
 <h1>🚗 High-Speed Racing</h1>
-<p style="color:#aaa;margin-bottom:15px;">Avoid traffic! Use Left/Right Arrows or Tap Sides of the Screen to steer.</p>
+<p style="color:#aaa;margin-bottom:15px;">Avoid traffic! Use Arrow Keys or Tap Buttons to steer.</p>
 
 <div class="menu-stats">
 <div id="menu-high">🏆 High Score: 0</div>
@@ -433,15 +483,18 @@ function initGame() {
     });
     window.addEventListener("keyup", e => keys[e.key] = false);
 
-    // --- MOBILE TOUCH EVENT LISTENERS ---
-    const leftZone = document.getElementById("left-zone");
-    const rightZone = document.getElementById("right-zone");
+    // --- VISIBLE BUTTON TOUCH EVENT LISTENERS ---
+    const leftBtn = document.getElementById("left-btn");
+    const rightBtn = document.getElementById("right-btn");
 
-    leftZone.addEventListener("touchstart", (e) => { e.preventDefault(); keys["ArrowLeft"] = true; });
-    leftZone.addEventListener("touchend", (e) => { e.preventDefault(); keys["ArrowLeft"] = false; });
+    // Standard touch events with e.preventDefault to prevent scrolling/zooming
+    leftBtn.addEventListener("touchstart", (e) => { e.preventDefault(); keys["ArrowLeft"] = true; });
+    leftBtn.addEventListener("touchend", (e) => { e.preventDefault(); keys["ArrowLeft"] = false; });
+    leftBtn.addEventListener("touchcancel", (e) => { e.preventDefault(); keys["ArrowLeft"] = false; }); // Handle touch interruption
     
-    rightZone.addEventListener("touchstart", (e) => { e.preventDefault(); keys["ArrowRight"] = true; });
-    rightZone.addEventListener("touchend", (e) => { e.preventDefault(); keys["ArrowRight"] = false; });
+    rightBtn.addEventListener("touchstart", (e) => { e.preventDefault(); keys["ArrowRight"] = true; });
+    rightBtn.addEventListener("touchend", (e) => { e.preventDefault(); keys["ArrowRight"] = false; });
+    rightBtn.addEventListener("touchcancel", (e) => { e.preventDefault(); keys["ArrowRight"] = false; });
 
     function startGame() {
       playStartSound(); 
@@ -495,6 +548,7 @@ function initGame() {
       requestAnimationFrame(animate);
 
       if (running) {
+        // Combined logic for keypress and button press
         if (keys.ArrowLeft || keys.a) player.position.x -= 0.10;
         if (keys.ArrowRight || keys.d) player.position.x += 0.10;
 
